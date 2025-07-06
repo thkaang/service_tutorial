@@ -22,5 +22,12 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Error:", error);
         });
     }
+
+    const button = document.getElementById("uploadBtn");
+
+    if (button) {
+        button.addEventListener("click", uploadAudio);
+    }
+
     window.uploadAudio = uploadAudio;
 });
