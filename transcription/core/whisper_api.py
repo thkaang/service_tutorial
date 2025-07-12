@@ -1,6 +1,4 @@
 import whisper
-import os
-import time
 
 
 class Whisper:
