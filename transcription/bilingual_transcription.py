@@ -7,7 +7,7 @@ from core.whisper_api import Whisper
 from core.silero_vad_api import SileroVAD
 
 # tiny < base < small < medium < turbo < large
-whisper_model_type = 'turbo'
+whisper_model_type = 'small'
 whisper = Whisper(type=whisper_model_type)
 silero_vad = SileroVAD()
 
