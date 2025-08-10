@@ -19,3 +19,7 @@ class Whisper:
     def transcribe(self, path, language=None):
         result = self.model.transcribe(path, language=language)
         return result["text"]
+
+    def transcribe_audio_data(self, samples, language=None):
+        result = self.model.transcribe(samples, language=language, fp16=False)
+        return result["text"]
