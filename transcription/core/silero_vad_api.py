@@ -18,7 +18,7 @@ class SileroVAD:
 
         return torch.from_numpy(samples)
 
-    def vad(self, audio_file):
+    def vad(self, audio_file, threshold=0.5):
         format = audio_file.split(".")[-1]
         if format == "m4a":
             audio_data = self.__m4a_to_wav(audio_file)
@@ -31,6 +31,7 @@ class SileroVAD:
         speech_timestamps = self.get_speech_timestamps(
             audio_data,
             self.model,
+            threshold=threshold,
             return_seconds=True,  # Return speech timestamps in seconds (default is samples)
         )
 
