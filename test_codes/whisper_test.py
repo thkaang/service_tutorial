@@ -3,11 +3,7 @@ import os
 import time
 
 print(os.getcwd())
-# path = os.path.abspath("audio_english_korean.mp3")
-# path = os.path.abspath("audio_japanese.mp3")
-# path = os.path.abspath("한국어_영어_1.m4a")
-# path = os.path.abspath("한국어_영어_2.m4a")
-path = os.path.abspath("한국어_중국어_1.m4a")
+path = os.path.abspath("../transcription/audio_data/한국어_중국어_1.m4a")
 print(path)
 model = whisper.load_model("turbo")
 # model = whisper.load_model("medium")
