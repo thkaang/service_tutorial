@@ -1,4 +1,6 @@
 import librosa
+import torch
+from pyannote.audio import Pipeline
 import core.separate_fast as separate_fast
 from core.silero_vad_api import SileroVAD
 from core.whisper_api import Whisper
@@ -8,7 +10,13 @@ from core.amphion_utils import *
 class TranscriptionPipe:
     def __init__(self, cfg, device_name='cuda', whisper_model_type='turbo'):
         self.cfg = cfg
+        self.device_name = device_name
+        self.target_sr = 16000
         self.separate_predictor = separate_fast.Predictor(args=cfg["separate"]["step1"], device=device_name)
+        self.dia_pipeline = Pipeline.from_pretrained(
+            "pyannote/speaker-diarization-3.1",
+            use_auth_token=cfg["huggingface_token"]
+        ).to(torch.device(device_name))
         self.silero_vad = SileroVAD()
         self.whisper = Whisper(type=whisper_model_type)
 
@@ -24,4 +32,11 @@ class TranscriptionPipe:
     def run(self, audio_path: str):
         audio = standardization(audio_path)
         audio = self.source_separation(audio)
+
+        # resample to 16kHz
+        audio["waveform"] = librosa.resample(audio["waveform"], orig_sr=audio["sample_rate"], target_sr=self.target_sr)
+        audio["sample_rate"] = self.target_sr
+
+        speaker_info_df = speaker_diarization(audio, self.dia_pipeline, device_name=self.device_name)
+
         return audio

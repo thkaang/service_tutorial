@@ -4,7 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 import os
 import json
+import torch
 import numpy as np
+import pandas as pd
 from pydub import AudioSegment
 
 
@@ -40,6 +42,44 @@ def standardization(audio_path: str):
         "name": name,
         "sample_rate": sample_rate,
     }
+
+
+def speaker_diarization(audio, dia_pipeline, device_name='cuda'):
+    """
+    Perform speaker diarization on the given audio.
+
+    Args:
+        audio (dict): A dictionary containing the audio waveform and sample rate.
+
+    Returns:
+        pd.DataFrame: A dataframe containing segments with speaker labels.
+    """
+    print(f"[LOG] Start speaker diarization")
+    print(f"[LOG] audio waveform shape: {audio['waveform'].shape}")
+
+    device = torch.device(device_name)
+
+    waveform = torch.tensor(audio["waveform"]).to(device)
+    waveform = torch.unsqueeze(waveform, 0)
+
+    segments = dia_pipeline(
+        {
+            "waveform": waveform,
+            "sample_rate": audio["sample_rate"],
+            "channel": 0,
+        }
+    )
+
+    diarize_df = pd.DataFrame(
+        segments.itertracks(yield_label=True),
+        columns=["segment", "label", "speaker"],
+    )
+    diarize_df["start"] = diarize_df["segment"].apply(lambda x: x.start)
+    diarize_df["end"] = diarize_df["segment"].apply(lambda x: x.end)
+
+    print(f"[LOG] diarize_df: {diarize_df}")
+
+    return diarize_df
 
 
 def load_cfg(cfg_path):
