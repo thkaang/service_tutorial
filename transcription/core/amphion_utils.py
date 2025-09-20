@@ -2,12 +2,17 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import sys
 import os
 import json
 import torch
+import librosa
 import numpy as np
 import pandas as pd
 from pydub import AudioSegment
+
+sys.path.append("core")
+from whisper_api import Whisper
 
 
 def standardization(audio_path: str):
@@ -148,6 +153,49 @@ def cut_by_speaker_label(vad_list):
     )
 
     return filter_list
+
+
+def asr_whisper(vad_segments, audio, whisper: Whisper):
+    """
+    Perform Automatic Speech Recognition (ASR) on the VAD segments of the given audio.
+
+    Args:
+        vad_segments (list): List of VAD segments with start and end times.
+        audio (dict): A dictionary containing the audio waveform and sample rate.
+
+    Returns:
+        list: A list of ASR results with transcriptions and language details.
+    """
+    if len(vad_segments) == 0:
+        return []
+
+    temp_audio = audio["waveform"]
+    start_time = vad_segments[0]["start"]
+    end_time = vad_segments[-1]["end"]
+    start_frame = int(start_time * audio["sample_rate"])
+    end_frame = int(end_time * audio["sample_rate"])
+    temp_audio = temp_audio[start_frame:end_frame]  # remove silent start and end
+
+    # update vad_segments start and end time (this is a little trick for batched asr:)
+    for idx, segment in enumerate(vad_segments):
+        vad_segments[idx]["start"] -= start_time
+        vad_segments[idx]["end"] -= start_time
+
+    # resample to 16k
+    temp_audio = librosa.resample(
+        temp_audio, orig_sr=audio["sample_rate"], target_sr=16000
+    )
+
+    all_transcribe_result = []
+
+    for segment in vad_segments:
+        start_frame = int(segment["start"]*16000)
+        end_frame = int(segment["end"] * 16000)
+        segment_audio = temp_audio[start_frame:end_frame]
+        transcribe_result = whisper.transcribe(segment_audio)
+        all_transcribe_result.append(transcribe_result)
+
+    return all_transcribe_result
 
 
 def load_cfg(cfg_path):

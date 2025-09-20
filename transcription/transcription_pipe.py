@@ -44,5 +44,6 @@ class TranscriptionPipe:
         print("Step 4: Voice Activity Detection")
         vad_list = self.silero_vad.vad(speaker_info_df, audio)
         segment_list = cut_by_speaker_label(vad_list)
+        asr_result = asr_whisper(segment_list, audio, self.whisper)
 
-        return audio
+        return asr_result

@@ -10,6 +10,7 @@
             "de"
         ]
     },
+    "whisper_model_type": "turbo",
     "separate": {
         "step1": {
             "model_path": "./model_files/UVR-MDX-NET-Inst_HQ_3.onnx",
