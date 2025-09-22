@@ -1,4 +1,5 @@
 {
+    "transcription_pipe_type": "v2",
     "language": {
         "multilingual": true,
         "supported": [

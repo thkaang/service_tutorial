@@ -2,9 +2,10 @@ import librosa
 import torch
 from pyannote.audio import Pipeline
 import core.separate_fast as separate_fast
-from core.silero_vad import SileroVAD
+from core.silero_vad_module import SileroVAD
 from core.whisper_api import Whisper
 from core.amphion_utils import *
+from core.custom_utils import *
 
 
 class TranscriptionPipe:
@@ -45,5 +46,24 @@ class TranscriptionPipe:
         vad_list = self.silero_vad.vad(speaker_info_df, audio)
         segment_list = cut_by_speaker_label(vad_list)
         asr_result = asr_whisper(segment_list, audio, self.whisper)
+        print("Transcription process finished")
+
+        return asr_result
+
+    def run_v2_wo_spkdia(self, audio_path: str):
+        print("Step 1: standardization")
+        audio = standardization(audio_path)
+        print("Step 2: source separation")
+        audio = self.source_separation(audio)
+
+        # resample to 16kHz
+        audio["waveform"] = librosa.resample(audio["waveform"], orig_sr=audio["sample_rate"], target_sr=self.target_sr)
+        audio["sample_rate"] = self.target_sr
+
+        print("Step 3: Voice Activity Detection")
+        vad_list = vad_only(self.silero_vad, audio)
+        segment_list = merge_over_min_length(vad_list)
+        asr_result = asr_whisper(segment_list, audio, self.whisper)
+        print("Transcription process finished")
 
         return asr_result
