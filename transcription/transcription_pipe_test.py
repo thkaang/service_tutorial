@@ -1,4 +1,5 @@
 import argparse
+import os
 from transcription_pipe import TranscriptionPipe
 from core.amphion_utils import load_cfg
 
@@ -12,9 +13,10 @@ if __name__ == '__main__':
     cfg = load_cfg(args.config_path)
     whisper_model_type = cfg["whisper_model_type"]
     tr_pipe_type = cfg["transcription_pipe_type"]
+    os.environ["HF_TOKEN"] = cfg["huggingface_token"]
     file_name, extension = args.audio_path.split("/")[-1].split(".")
 
-    tr_pipe = TranscriptionPipe(cfg, device_name='cpu', whisper_model_type=whisper_model_type)
+    tr_pipe = TranscriptionPipe(cfg, device_name='cuda', whisper_model_type=whisper_model_type)
 
     if tr_pipe_type == "v1":
         result_list = tr_pipe.run(args.audio_path)

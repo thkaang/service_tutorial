@@ -5,6 +5,7 @@
 import sys
 import os
 import json
+import time
 import torch
 import librosa
 import numpy as np
@@ -168,7 +169,7 @@ def asr_whisper(vad_segments, audio, whisper: Whisper):
     """
     if len(vad_segments) == 0:
         return []
-
+    start = time.time()
     temp_audio = audio["waveform"]
     start_time = vad_segments[0]["start"]
     end_time = vad_segments[-1]["end"]
@@ -194,6 +195,8 @@ def asr_whisper(vad_segments, audio, whisper: Whisper):
         segment_audio = temp_audio[start_frame:end_frame]
         transcribe_result = whisper.transcribe(segment_audio)
         all_transcribe_result.append(transcribe_result)
+    elapsed_time = time.time() - start
+    print(f"Transcription elapsed time: {elapsed_time:.3f}")
 
     return all_transcribe_result
 

@@ -14,12 +14,9 @@ class TranscriptionPipe:
         self.device_name = device_name
         self.target_sr = 16000
         self.separate_predictor = separate_fast.Predictor(args=cfg["separate"]["step1"], device=device_name)
-        self.dia_pipeline = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1",
-            use_auth_token=cfg["huggingface_token"]
-        ).to(torch.device(device_name))
+        self.dia_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1").to(torch.device(device_name))
         self.silero_vad = SileroVAD()
-        self.whisper = Whisper(type=whisper_model_type)
+        self.whisper = Whisper(type=whisper_model_type, device=device_name)
 
     def source_separation(self, audio):
         target_sr = 44100
