@@ -217,8 +217,8 @@ def cache_or_load(mix_path, inst_path, mp):
                 y_wave[d], _ = librosa.load(
                     inst_path, bp['sr'], False, dtype=np.float32, res_type=bp['res_type'])
             else: # lower bands
-                X_wave[d] = librosa.resample(X_wave[d+1], mp.param['band'][d+1]['sr'], bp['sr'], res_type=bp['res_type'])
-                y_wave[d] = librosa.resample(y_wave[d+1], mp.param['band'][d+1]['sr'], bp['sr'], res_type=bp['res_type'])
+                X_wave[d] = librosa.resample(X_wave[d+1], orig_sr=mp.param['band'][d+1]['sr'], target_sr=bp['sr'], res_type=bp['res_type'])
+                y_wave[d] = librosa.resample(y_wave[d+1], orig_sr=mp.param['band'][d+1]['sr'], target_sr=bp['sr'], res_type=bp['res_type'])
             
             X_wave[d], y_wave[d] = align_wave_head_and_tail(X_wave[d], y_wave[d])
             
@@ -309,13 +309,13 @@ def cmb_spectrogram_to_wave(spec_m, mp, extra_bins_h=None, extra_bins=None):
             sr = mp.param['band'][d+1]['sr']
             if d == 1: # lower
                 spec_s = fft_lp_filter(spec_s, bp['lpf_start'], bp['lpf_stop'])
-                wave = librosa.resample(spectrogram_to_wave(spec_s, bp['hl'], mp.param['mid_side'], mp.param['mid_side_b2'], mp.param['reverse']), bp['sr'], sr, res_type="sinc_fastest")
+                wave = librosa.resample(spectrogram_to_wave(spec_s, bp['hl'], mp.param['mid_side'], mp.param['mid_side_b2'], mp.param['reverse']), orig_sr=bp['sr'], target_sr=sr, res_type="sinc_fastest")
             else: # mid
                 spec_s = fft_hp_filter(spec_s, bp['hpf_start'], bp['hpf_stop'] - 1)
                 spec_s = fft_lp_filter(spec_s, bp['lpf_start'], bp['lpf_stop'])
                 wave2 = np.add(wave, spectrogram_to_wave(spec_s, bp['hl'], mp.param['mid_side'], mp.param['mid_side_b2'], mp.param['reverse']))
                 # wave = librosa.core.resample(wave2, bp['sr'], sr, res_type="sinc_fastest")
-                wave = librosa.core.resample(wave2, bp['sr'], sr,res_type='scipy')
+                wave = librosa.core.resample(wave2, orig_sr=bp['sr'], target_sr=sr, res_type='scipy')
         
     return wave.T
 
@@ -429,7 +429,7 @@ if __name__ == "__main__":
                 if len(wave[d].shape) == 1: # mono to stereo
                     wave[d] = np.array([wave[d], wave[d]])
             else: # lower bands
-                wave[d] = librosa.resample(wave[d+1], mp.param['band'][d+1]['sr'], bp['sr'], res_type=bp['res_type'])
+                wave[d] = librosa.resample(wave[d+1], orig_sr=mp.param['band'][d+1]['sr'], target_sr=bp['sr'], res_type=bp['res_type'])
                        
             spec[d] = wave_to_spectrogram(wave[d], bp['hl'], bp['n_fft'], mp.param['mid_side'], mp.param['mid_side_b2'], mp.param['reverse'])
             
