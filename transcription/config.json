@@ -23,5 +23,8 @@
             "dim_f": 3072
         }
     },
+    "separate_gpu": {
+        "model_path": "./model_files/2_HP-UVR.pth"
+    },
     "huggingface_token": "<HUGGINGFACE_ACCESS_TOKEN>"
 }

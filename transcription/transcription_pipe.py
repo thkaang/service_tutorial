@@ -2,6 +2,7 @@ import librosa
 import torch
 from pyannote.audio import Pipeline
 import core.separate_fast as separate_fast
+from core.uvr.separate import _audio_pre_
 from core.silero_vad_module import SileroVAD
 from core.whisper_api import Whisper
 from core.amphion_utils import *
@@ -13,15 +14,18 @@ class TranscriptionPipe:
         self.cfg = cfg
         self.device_name = device_name
         self.target_sr = 16000
-        self.separate_predictor = separate_fast.Predictor(args=cfg["separate"]["step1"], device=device_name)
+        self.separate_predictor = None
+        if device_name == 'cuda':
+            self.separate_predictor = _audio_pre_(model_path=cfg['separate_gpu']['model_path'], device=device_name, is_half=True)
+        else:
+            self.separate_predictor = separate_fast.Predictor(args=cfg["separate"]["step1"], device=device_name)
         self.dia_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1").to(torch.device(device_name))
         self.silero_vad = SileroVAD()
         self.whisper = Whisper(type=whisper_model_type, device=device_name)
 
     def source_separation(self, audio):
         target_sr = 44100
-        mix = librosa.resample(audio["waveform"], orig_sr=audio["sample_rate"], target_sr=target_sr)
-        vocals, no_vocals = self.separate_predictor.predict(mix)
+        vocals, no_vocals = self.separate_predictor.predict(audio, target_sr)
         audio["sample_rate"] = target_sr
         audio["waveform"] = vocals[:, 0]
 
