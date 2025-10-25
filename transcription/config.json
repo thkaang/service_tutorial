@@ -12,6 +12,18 @@
         ]
     },
     "whisper_model_type": "turbo",
+    "vad": {
+        "preprocess": {
+            "MERGE_GAP": 2,
+            "MIN_SEGMENT_LENGTH": 60,
+            "MAX_SEGMENT_LENGTH": 120
+        },
+        "transcription": {
+            "MERGE_GAP": 2,
+            "MIN_SEGMENT_LENGTH": 1,
+            "MAX_SEGMENT_LENGTH": 30
+        }
+    },
     "separate": {
         "step1": {
             "model_path": "./model_files/UVR-MDX-NET-Inst_HQ_3.onnx",
