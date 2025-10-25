@@ -37,7 +37,7 @@ def standardization(audio_path: str):
     normalized_audio = audio.apply_gain(min(max(gain, -3), 3))
 
     waveform = np.array(normalized_audio.get_array_of_samples(), dtype=np.float32)
-    max_amplitude = np.max(np.abs(waveform))
+    max_amplitude = np.max(np.abs(waveform)) + 500  # to suppress overflow
     waveform /= max_amplitude  # Normalize
 
     print(f"[LOG] waveform shape: {waveform.shape}")

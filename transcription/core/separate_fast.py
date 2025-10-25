@@ -9,6 +9,7 @@
 # This code is modified from https://github.com/seanghay/uvr-mdx-infer/blob/main/separate.py
 
 import torch
+import librosa
 import numpy as np
 import onnxruntime as ort
 from tqdm import tqdm
@@ -256,7 +257,7 @@ class Predictor:
         progress_bar.close()
         return _sources
 
-    def predict(self, mix):
+    def predict(self, audio, target_sr=44100):
         """
         Predict the separated sources from the input mix.
 
@@ -266,6 +267,7 @@ class Predictor:
         Returns:
             tuple: Tuple containing the mixture minus the separated sources and the separated sources.
         """
+        mix = librosa.resample(audio["waveform"], orig_sr=audio["sample_rate"], target_sr=target_sr)
         if mix.ndim == 1:
             mix = np.asfortranarray([mix, mix])
 
