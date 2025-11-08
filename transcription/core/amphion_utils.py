@@ -11,6 +11,7 @@ import librosa
 import numpy as np
 import pandas as pd
 from pydub import AudioSegment
+from langdetect import detect
 
 sys.path.append("core")
 from whisper_api import Whisper
@@ -156,7 +157,7 @@ def cut_by_speaker_label(vad_list):
     return filter_list
 
 
-def asr_whisper(vad_segments, audio, whisper: Whisper):
+def asr_whisper(vad_segments, audio, whisper: Whisper, restrict_lang_dict: dict=None):
     """
     Perform Automatic Speech Recognition (ASR) on the VAD segments of the given audio.
 
@@ -194,6 +195,17 @@ def asr_whisper(vad_segments, audio, whisper: Whisper):
         end_frame = int(segment["end"] * 16000)
         segment_audio = temp_audio[start_frame:end_frame]
         transcribe_result = whisper.transcribe(segment_audio)
+
+        if restrict_lang_dict:
+            try:
+                lang_code = detect(transcribe_result)
+                if lang_code not in restrict_lang_dict.values():
+                    print(f"wrong lang transcription: {transcribe_result}")
+                    transcribe_result = whisper.transcribe(segment_audio, language=restrict_lang_dict["whisper_restrict"])
+                    print(f"restricted transcription: {transcribe_result}")
+            except Exception:
+                print(f"Exception occurs! transcription: {transcribe_result}")
+
         all_transcribe_result.append(transcribe_result)
     elapsed_time = time.time() - start
     print(f"Transcription elapsed time: {elapsed_time:.3f}")

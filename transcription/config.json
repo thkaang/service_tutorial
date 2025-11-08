@@ -1,15 +1,10 @@
 {
     "transcription_pipe_type": "v2",
-    "language": {
-        "multilingual": true,
-        "supported": [
-            "zh",
-            "en",
-            "fr",
-            "ja",
-            "ko",
-            "de"
-        ]
+    "restrict_lang": {
+        "1st_lang": "ko",
+        "2nd_lang": "zh-cn",
+        "3rd_lang": "zh-tw",
+        "whisper_restrict": "zh"
     },
     "whisper_model_type": "turbo",
     "vad": {

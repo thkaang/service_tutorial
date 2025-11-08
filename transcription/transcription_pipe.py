@@ -80,7 +80,7 @@ class TranscriptionPipe:
         vad_list = self.silero_vad.vad(speaker_info_df, audio)
         segment_list = cut_by_speaker_label(vad_list)
         print("Step 5: Transcription")
-        asr_result = asr_whisper(segment_list, audio, self.whisper)
+        asr_result = asr_whisper(segment_list, audio, self.whisper, restrict_lang_dict=self.cfg["restrict_lang"])
         print("Transcription process finished")
         elapsed_time = time.time() - start
         audio_length = len(audio["waveform"]) / audio["sample_rate"]
@@ -111,7 +111,7 @@ class TranscriptionPipe:
             vad_list = vad_only(self.silero_vad, audio_chunk)
             segment_list = merge_over_min_length(vad_list, self.cfg['vad']['transcription'])
             print(f"Step 4_({idx}): Transcription")
-            asr_result = asr_whisper(segment_list, audio_chunk, self.whisper)
+            asr_result = asr_whisper(segment_list, audio_chunk, self.whisper, restrict_lang_dict=self.cfg["restrict_lang"])
             asr_result = f"{idx}. {' '.join(asr_result)}\n"
             asr_results.append(asr_result)
 
