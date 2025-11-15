@@ -68,3 +68,8 @@ def merge_over_min_length(vad_list, cfg, preprocess=False):
     )
 
     return filter_list
+
+
+def allowed_file(filename: str, allowed_extensions: list) -> tuple:
+    extension = filename.rsplit(".", 1)[1].lower()
+    return "." in filename and extension in allowed_extensions, extension

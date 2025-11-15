@@ -1,3 +1,4 @@
+import io
 import time
 import librosa
 import torch
@@ -62,10 +63,10 @@ class TranscriptionPipe:
 
         return audio_chunks
 
-    def run(self, audio_path: str):
+    def run(self, audio_buffer: io.BytesIO, audio_format: str):
         start = time.time()
         print("Step 1: standardization")
-        audio = standardization(audio_path)
+        audio = standardization(audio_buffer, audio_format)
 
         print("Step 2: source separation")
         audio = self.source_separation(audio)
@@ -89,11 +90,11 @@ class TranscriptionPipe:
 
         return asr_result
 
-    def run_v2_wo_spkdia(self, audio_path: str):
+    def run_v2_wo_spkdia(self, audio_buffer: io.BytesIO, audio_format: str):
         start = time.time()
         asr_results = []
         print("Step 1: standardization")
-        audio = standardization(audio_path)
+        audio = standardization(audio_buffer, audio_format)
 
         audio_chunks = self.get_audio_chunks(audio)
 

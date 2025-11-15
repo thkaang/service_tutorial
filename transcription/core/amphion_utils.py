@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import io
 import sys
 import os
 import json
@@ -17,9 +18,8 @@ sys.path.append("core")
 from whisper_api import Whisper
 
 
-def standardization(audio_path: str):
-    name = os.path.basename(audio_path)
-    audio = AudioSegment.from_file(audio_path)
+def standardization(audio_buffer: io.BytesIO, audio_format='wav'):
+    audio = AudioSegment.from_file(audio_buffer, format=audio_format)
 
     # Convert the audio file to WAV format
     # audio = audio.set_frame_rate(cfg["entrypoint"]["SAMPLE_RATE"])
@@ -46,7 +46,6 @@ def standardization(audio_path: str):
 
     return {
         "waveform": waveform,
-        "name": name,
         "sample_rate": sample_rate,
     }
 
