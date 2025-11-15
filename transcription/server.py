@@ -1,17 +1,33 @@
-# app.py
-from flask import Flask, send_from_directory, jsonify, request, make_response
-from werkzeug.utils import secure_filename
+import io
+import sys
 import os
+import argparse
+from flask import Flask, send_from_directory, jsonify, request, make_response
+from transcription_pipe import TranscriptionPipe
+from core.amphion_utils import load_cfg
+from core.custom_utils import allowed_file
 
-# 허용 확장자
-ALLOWED_EXTENSIONS = {"wav", "m4a", "mp3"}
+ALLOWED_EXTENSIONS = ["wav", "m4a", "mp3"]
 app = Flask(__name__,
             static_folder="server/dist/public",  # 빌드된 React
             static_url_path="")
 
 
-def allowed_file(filename: str) -> bool:
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config_path", type=str, default="config.json", help="config path")
+    known_args = [arg for arg in sys.argv if arg.startswith('--config_path')]
+    return parser.parse_args(known_args)
+
+
+config_path = os.environ.get("CONFIG_PATH", None)
+args = get_args()
+config_path = config_path if config_path is not None else args.config_path
+cfg = load_cfg(config_path)
+whisper_model_type = cfg["whisper_model_type"]
+os.environ["HF_TOKEN"] = cfg["huggingface_token"]
+
+tr_pipe = TranscriptionPipe(cfg, device_name='cuda', whisper_model_type=whisper_model_type)
 
 
 # React 정적 파일 서빙
@@ -36,10 +52,6 @@ def ping():
     return jsonify({"message": "pong from Flask"})
 
 
-def allowed_file(filename: str) -> bool:
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
     # 파일이 있는지 확인
@@ -48,25 +60,19 @@ def transcribe():
 
     file = request.files["file"]
 
-    # 파일 이름이 비어있는 경우
     if file.filename == "":
         return make_response("No selected file", 400)
 
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
+    allowed, audio_format = allowed_file(file.filename, ALLOWED_EXTENSIONS)
 
-        # 실제 STT 모델을 돌린다고 가정 (여기서는 mock)
-        mock_transcription = f"""[Mock Transcription]
+    if file and allowed:
+        audio_buffer = io.BytesIO(file.read())
 
-        File name: "{filename}"
-        
-        This is a sample transcription for the uploaded audio file.
-        In a production environment, this text would be generated
-        by your speech-to-text (STT) model or external transcription service.
-        """
+        transcription_list = tr_pipe.run(audio_buffer, audio_format)
+        transcription = '\n'.join(transcription_list)
 
         # text/plain으로 반환
-        response = make_response(mock_transcription, 200)
+        response = make_response(transcription, 200)
         response.headers["Content-Type"] = "text/plain; charset=utf-8"
 
         # CORS 허용
