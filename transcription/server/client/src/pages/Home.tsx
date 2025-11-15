@@ -23,19 +23,50 @@ export default function Home() {
     setState('upload');
   };
 
-  const handleStartTranscription = () => {
+  const handleStartTranscription = async () => {
     setState('processing');
-    
-    setTimeout(() => {
-      const mockTranscription = `This is a sample transcription for the file "${selectedFile?.name}". In a production environment, this text would come from your custom audio-to-text transcription service.
 
-The audio file has been successfully processed and converted to text. The transcription system has analyzed the audio content and provided an accurate text representation of the spoken words.
+    if (!selectedFile) {
+      console.error("No file selected.");
+      return;
+    }
 
-You can now copy this text, download it, or start a new transcription by uploading another audio file.`;
-      
-      setTranscriptionText(mockTranscription);
+    try {
+      // 파일 전송을 위해 FormData 사용
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      // Flask 서버로 POST 요청 보내기
+      const response = await fetch("http://127.0.0.1:5000/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      // Flask에서 반환한 텍스트
+      const transcription = await response.text();
+
+      setTranscriptionText(transcription);
       setState('results');
-    }, 3000);
+    } catch (error) {
+      console.error(error);
+      setTranscriptionText("Error occurred while processing the audio.");
+      setState('results');
+    }
+    
+//     setTimeout(() => {
+//       const mockTranscription = `This is a sample transcription for the file "${selectedFile?.name}". In a production environment, this text would come from your custom audio-to-text transcription service.
+//
+// The audio file has been successfully processed and converted to text. The transcription system has analyzed the audio content and provided an accurate text representation of the spoken words.
+//
+// You can now copy this text, download it, or start a new transcription by uploading another audio file.`;
+//
+//       setTranscriptionText(mockTranscription);
+//       setState('results');
+//     }, 3000);
   };
 
   const handleNewTranscription = () => {

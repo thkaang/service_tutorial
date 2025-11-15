@@ -9,3 +9,4 @@ openai-whisper
 pydub
 resampy
 langdetect
+flask
