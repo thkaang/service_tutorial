@@ -27,10 +27,7 @@ if __name__ == '__main__':
             audio_bytes = af.read()
             audio_buffer = io.BytesIO(audio_bytes)
             start = time.time()
-            if tr_pipe_type == "v1":
-                result_list = tr_pipe.run(audio_buffer, extension)
-            else:
-                result_list = tr_pipe.run_v2_wo_spkdia(audio_buffer, extension)
+            result_list = tr_pipe.run(audio_buffer, extension)
             print(f"Total elapsed time: {(time.time() - start):.3f} sec")
 
             with open(f"audio_data/{file_name}_{whisper_model_type}_{tr_pipe_type}.txt", "w", encoding='utf8') as f:

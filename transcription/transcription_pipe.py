@@ -27,6 +27,7 @@ class TranscriptionPipe:
         self.dia_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1").to(torch.device(device_name))
         self.silero_vad = SileroVAD()
         self.whisper = Whisper(type=whisper_model_type, device=device_name)
+        self.tr_pipe_type = cfg['transcription_pipe_type']
 
     def source_separation(self, audio):
         target_sr = 44100
@@ -64,6 +65,14 @@ class TranscriptionPipe:
         return audio_chunks
 
     def run(self, audio_buffer: io.BytesIO, audio_format: str):
+        if self.tr_pipe_type == 'v1':
+            return self.__run_v1(audio_buffer, audio_format)
+        elif self.tr_pipe_type == 'v2':
+            return self.__run_v2_wo_spkdia(audio_buffer, audio_format)
+        else:
+            return f"not supported transcription_pipe_type: {self.tr_pipe_type}"
+
+    def __run_v1(self, audio_buffer: io.BytesIO, audio_format: str):
         start = time.time()
         print("Step 1: standardization")
         audio = standardization(audio_buffer, audio_format)
@@ -90,7 +99,7 @@ class TranscriptionPipe:
 
         return asr_result
 
-    def run_v2_wo_spkdia(self, audio_buffer: io.BytesIO, audio_format: str):
+    def __run_v2_wo_spkdia(self, audio_buffer: io.BytesIO, audio_format: str):
         start = time.time()
         asr_results = []
         print("Step 1: standardization")
