@@ -6,7 +6,7 @@ import os
 # 허용 확장자
 ALLOWED_EXTENSIONS = {"wav", "m4a", "mp3"}
 app = Flask(__name__,
-            static_folder="dist/public",  # 빌드된 React
+            static_folder="server/dist/public",  # 빌드된 React
             static_url_path="")
 
 
