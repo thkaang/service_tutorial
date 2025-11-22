@@ -37,7 +37,7 @@ export default function Home() {
       formData.append('file', selectedFile);
 
       // Flask 서버로 POST 요청 보내기
-      const response = await fetch("http://127.0.0.1:5000/transcribe", {
+      const response = await fetch("/transcribe_request", {
         method: "POST",
         body: formData,
       });
