@@ -56,7 +56,6 @@ class TranscriptionPipe:
                 end_frame = int(pre_timestamp["end"] * audio["sample_rate"])
                 audio_chunks.append({
                     "waveform": audio["waveform"][start_frame:end_frame],
-                    "name": audio["name"],
                     "sample_rate": audio["sample_rate"]
                 })
         else:
