@@ -24,8 +24,10 @@ RUN apt-get install vim -y
 RUN apt-get install ffmpeg -y
 RUN apt-get install build-essential -y
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-RUN soruce ~/.bashrc
-RUN nvm install 24.11.1
+ENV NVM_DIR=/root/.nvm
+RUN . "$NVM_DIR/nvm.sh" \
+    && nvm install 24.11.1
+ENV PATH="$NVM_DIR/versions/node/v24.11.1/bin/:$PATH"
 
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -44,6 +46,7 @@ COPY ./audio_data /transcription_pipe/audio_data
 COPY ./model_files /transcription_pipe/model_files
 COPY ./transcription_pipe.py /transcription_pipe/.
 COPY ./transcription_pipe_test.py /transcription_pipe/.
+COPY ./server.py /transcription_pipe/.
 COPY ./config.json /transcription_pipe/.
 COPY ./core /transcription_pipe/core
 COPY ./server /transcription_pipe/server
@@ -51,5 +54,6 @@ COPY ./server /transcription_pipe/server
 # npm build
 WORKDIR /transcription_pipe/server
 RUN npm install --force
-RUN npm audit fix --force
+RUN npm audit fix --force || echo "npm audit fix returned non-zero code, ignoring..."
 RUN npm run build
+WORKDIR /transcription_pipe
