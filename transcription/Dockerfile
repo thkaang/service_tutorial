@@ -1,5 +1,5 @@
 # Use an official Python runtime as the base image
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+FROM nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04
 
 # Set the working directory in the container
 WORKDIR /transcription_pipe
