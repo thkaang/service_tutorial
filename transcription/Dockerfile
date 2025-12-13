@@ -45,6 +45,7 @@ RUN python -m pip install -r requirements.txt --no-cache-dir
 COPY ./audio_data /transcription_pipe/audio_data
 COPY ./transcription_pipe.py /transcription_pipe/.
 COPY ./transcription_pipe_test.py /transcription_pipe/.
+COPY ./pre_setting.py /transcription_pipe/.
 COPY ./server.py /transcription_pipe/.
 COPY ./config.json /transcription_pipe/.
 COPY ./core /transcription_pipe/core
