@@ -21,14 +21,17 @@ class TranscriptionPipe:
         self.device_name = device_name
         self.target_sr = 16000
         self.separate_predictor = None
+        self.dia_pipeline = None
+        self.tr_pipe_type = cfg['transcription_pipe_type']
         if device_name == 'cuda':
             self.separate_predictor = _audio_pre_(model_path=cfg['separate_gpu']['model_path'], device=device_name, is_half=True)
         else:
             self.separate_predictor = separate_fast.Predictor(args=cfg["separate"]["step1"], device=device_name)
-        self.dia_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1").to(torch.device(device_name))
+
+        if self.tr_pipe_type == 'v1':
+            self.dia_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1").to(torch.device(device_name))
         self.silero_vad = SileroVAD(local=True)
         self.whisper = Whisper(type=whisper_model_type, device=device_name)
-        self.tr_pipe_type = cfg['transcription_pipe_type']
 
     def source_separation(self, audio):
         target_sr = 44100
