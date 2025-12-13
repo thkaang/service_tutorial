@@ -43,7 +43,6 @@ RUN python -m pip install -r requirements.txt --no-cache-dir
 
 # Copy the current directory contents into the container
 COPY ./audio_data /transcription_pipe/audio_data
-COPY ./model_files /transcription_pipe/model_files
 COPY ./transcription_pipe.py /transcription_pipe/.
 COPY ./transcription_pipe_test.py /transcription_pipe/.
 COPY ./server.py /transcription_pipe/.
