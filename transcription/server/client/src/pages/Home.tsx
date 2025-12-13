@@ -80,7 +80,7 @@ export default function Home() {
       <header className="border-b">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold" data-testid="text-app-title">
-            Audio Transcription
+            Junto NeXT
           </h1>
           <ThemeToggle />
         </div>
