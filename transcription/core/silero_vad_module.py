@@ -36,7 +36,7 @@ class SileroVAD:
         """
         try:
             vad_model, utils = torch.hub.load(
-                repo_or_dir="snakers4/silero-vad" if not local else "vad/silero-vad",
+                repo_or_dir="snakers4/silero-vad" if not local else "model_files/torchhub/snakers4_silero-vad_master",
                 model=model,
                 force_reload=False,
                 onnx=True,

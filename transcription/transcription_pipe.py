@@ -26,7 +26,7 @@ class TranscriptionPipe:
         else:
             self.separate_predictor = separate_fast.Predictor(args=cfg["separate"]["step1"], device=device_name)
         self.dia_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1").to(torch.device(device_name))
-        self.silero_vad = SileroVAD()
+        self.silero_vad = SileroVAD(local=True)
         self.whisper = Whisper(type=whisper_model_type, device=device_name)
         self.tr_pipe_type = cfg['transcription_pipe_type']
 
