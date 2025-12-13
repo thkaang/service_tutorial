@@ -6,6 +6,7 @@ import numpy as np
 import soundfile as sf
 from tqdm import tqdm
 from pyannote.audio import Pipeline
+from datetime import timedelta
 import core.separate_fast as separate_fast
 from core.uvr.separate import _audio_pre_
 from core.silero_vad_module import SileroVAD
@@ -56,7 +57,9 @@ class TranscriptionPipe:
                 end_frame = int(pre_timestamp["end"] * audio["sample_rate"])
                 audio_chunks.append({
                     "waveform": audio["waveform"][start_frame:end_frame],
-                    "sample_rate": audio["sample_rate"]
+                    "sample_rate": audio["sample_rate"],
+                    "start_time": timedelta(pre_timestamp["start"]),
+                    "end_time": timedelta(pre_timestamp["end"])
                 })
         else:
             audio_chunks = [audio]
@@ -121,7 +124,7 @@ class TranscriptionPipe:
             segment_list = merge_over_min_length(vad_list, self.cfg['vad']['transcription'])
             print(f"Step 4_({idx}): Transcription")
             asr_result = asr_whisper(segment_list, audio_chunk, self.whisper, restrict_lang_dict=self.cfg["restrict_lang"])
-            asr_result = f"{idx}. {' '.join(asr_result)}\n"
+            asr_result = f"{audio_chunk['start_time']}~{audio_chunk['end_time']}. {' '.join(asr_result)}\n"
             asr_results.append(asr_result)
 
         print("Transcription process finished")
