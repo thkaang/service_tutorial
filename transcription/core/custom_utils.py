@@ -1,4 +1,5 @@
 from silero_vad_module import SileroVAD
+from datetime import timedelta
 
 
 def vad_only(vad: SileroVAD, audio):
@@ -73,3 +74,11 @@ def merge_over_min_length(vad_list, cfg, preprocess=False):
 def allowed_file(filename: str, allowed_extensions: list) -> tuple:
     extension = filename.rsplit(".", 1)[1].lower()
     return "." in filename and extension in allowed_extensions, extension
+
+
+def timedelta_to_hms(td: timedelta) -> str:
+    total_seconds = int(td.total_seconds())
+    h = total_seconds // 3600
+    m = (total_seconds % 3600) // 60
+    s = total_seconds % 60
+    return f"{h:02d}:{m:02d}:{s:02d}"
