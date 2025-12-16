@@ -58,11 +58,13 @@ class TranscriptionPipe:
             for pre_timestamp in pre_segment_list:
                 start_frame = int(pre_timestamp["start"] * audio["sample_rate"])
                 end_frame = int(pre_timestamp["end"] * audio["sample_rate"])
+                start_timestamp = timedelta_to_hms(timedelta(seconds=pre_timestamp["start"]))
+                end_timestamp = timedelta_to_hms(timedelta(seconds=pre_timestamp["end"]))
                 audio_chunks.append({
                     "waveform": audio["waveform"][start_frame:end_frame],
                     "sample_rate": audio["sample_rate"],
-                    "start_time": timedelta(pre_timestamp["start"]),
-                    "end_time": timedelta(pre_timestamp["end"])
+                    "start_time": start_timestamp,
+                    "end_time": end_timestamp
                 })
         else:
             audio_chunks = [audio]
