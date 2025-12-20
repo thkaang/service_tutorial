@@ -1,5 +1,17 @@
+import argparse
+import sys
 import os
 import torch
+import whisper
+from core.amphion_utils import load_cfg
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config_path", type=str, default="config.json", help="config path")
+    known_args = [arg for arg in sys.argv if arg.startswith('--config_path')]
+    return parser.parse_args(known_args)
+
 
 def predownload_silero_vad(
     hub_dir: str = "model_files/torchhub",
@@ -34,6 +46,22 @@ def predownload_silero_vad(
     return vad_model, utils
 
 
+def predownload_whisper(whisper_dir, model_type="turbo"):
+    model = whisper.load_model(
+        model_type,
+        download_root=whisper_dir
+    )
+
+
 if __name__ == "__main__":
     hub_dir = os.environ.get("TORCH_HUB_DIR", "model_files/torchhub")
+    whisper_dir = os.environ.get("WHISPER_DIR", "model_files/whisper")
+
+    config_path = os.environ.get("CONFIG_PATH", None)
+    args = get_args()
+    config_path = config_path if config_path is not None else args.config_path
+    cfg = load_cfg(config_path)
+    model_type = cfg["whisper_model_type"]
+
     predownload_silero_vad(hub_dir=hub_dir)
+    predownload_whisper(whisper_dir=whisper_dir, model_type=model_type)

@@ -2,9 +2,9 @@ import whisper
 
 
 class Whisper:
-    def __init__(self, type="turbo", device="cuda"):
+    def __init__(self, type="turbo", model_path="model_files/whisper", device="cuda"):
         print("whisper model loading...")
-        self.model = whisper.load_model(type, device=device)
+        self.model = whisper.load_model(type, download_root=model_path, device=device)
         self.options = whisper.DecodingOptions()
         print("whisper model is loaded.")
 
