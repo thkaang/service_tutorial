@@ -67,6 +67,10 @@ class TranscriptionPipe:
                     "end_time": end_timestamp
                 })
         else:
+            start_timestamp = timedelta_to_hms(timedelta(seconds=0))
+            end_timestamp = timedelta_to_hms(timedelta(seconds=(len(audio["waveform"]) / audio["sample_rate"])))
+            audio["start_time"] = start_timestamp
+            audio["end_time"] = end_timestamp
             audio_chunks = [audio]
 
         return audio_chunks
