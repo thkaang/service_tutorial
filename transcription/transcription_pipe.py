@@ -5,6 +5,7 @@ import torch
 import numpy as np
 import soundfile as sf
 from tqdm import tqdm
+from collections import OrderedDict, defaultdict
 from pyannote.audio import Pipeline
 from datetime import timedelta
 import core.separate_fast as separate_fast
@@ -81,6 +82,8 @@ class TranscriptionPipe:
             return self.__run_v1(audio_buffer, audio_format)
         elif self.tr_pipe_type == 'v2':
             return self.__run_v2_wo_spkdia(audio_buffer, audio_format)
+        elif self.tr_pipe_type == 'v3':
+            return self.__run_v3_batch_wo_spkdia(audio_buffer, audio_format)
         else:
             return f"not supported transcription_pipe_type: {self.tr_pipe_type}"
 
@@ -144,3 +147,78 @@ class TranscriptionPipe:
         print(f"xRT: {elapsed_time / audio_length:.3f} xRT")
 
         return asr_results
+
+    def __run_v3_batch_wo_spkdia(self, audio_buffer: io.BytesIO, audio_format: str):
+        start = time.time()
+        asr_results = {}
+        segment_dict = defaultdict(dict)
+        audio_chunk_time_dict = {}
+        final_asr_results = []
+        print("Step 1: standardization")
+        audio = standardization(audio_buffer, audio_format)
+
+        audio_chunks = self.get_audio_chunks(audio)
+
+        for idx, audio_chunk in enumerate(tqdm(audio_chunks), start=1):
+            audio_chunk_time_dict[str(idx)] = {'start_time': audio_chunk['start_time'], 'end_time': audio_chunk['end_time']}
+            # sf.write(f"./audio_data/test_{audio_chunk['name']}_{idx}.wav", audio_chunk["waveform"], samplerate=audio_chunk["sample_rate"])
+            print(f"Step 2_({idx}): source separation")
+            audio_chunk = self.source_separation(audio_chunk)
+
+            # resample to 16kHz
+            print(f"Step 2.1_({idx}): resampling for vad")
+            audio_chunk["waveform"] = librosa.resample(audio_chunk["waveform"], orig_sr=audio_chunk["sample_rate"], target_sr=self.target_sr)
+            audio_chunk["sample_rate"] = self.target_sr
+
+            print(f"Step 3_({idx}): Voice Activity Detection")
+            vad_list = vad_only(self.silero_vad, audio_chunk)
+            segment_list = merge_over_min_length(vad_list, self.cfg['vad']['transcription'])
+
+            for seg_idx, segment in enumerate(segment_list):
+                start_frame = int(segment["start"] * 16000)
+                end_frame = int(segment["end"] * 16000)
+
+                segment_audio = audio_chunk["waveform"][start_frame:end_frame]
+                segment_audio = self.whisper.pad_or_trim(segment_audio)
+                mel = self.whisper.log_mel_spectrogram(segment_audio)
+                language_code = self.whisper.detect_language(mel)
+
+                restrict_lang_dict = self.cfg["restrict_lang_v3"]
+
+                if restrict_lang_dict:
+                    if language_code not in restrict_lang_dict.values():
+                        print(f"wrong lang: {language_code}")
+                        language_code = restrict_lang_dict["whisper_restrict"]
+                        print(f"changed lang: {language_code}")
+
+                segment_dict[language_code][f"{idx}_{seg_idx}"] = [mel, segment["end"] - segment["start"]]
+
+        print(f"Step 4: Transcription")
+        for language in segment_dict.keys():
+            sorted_mel_segment_dict = OrderedDict(sorted(segment_dict[language].items(), key=lambda x: x[1][1]))
+            asr_result = asr_whisper_batch(sorted_mel_segment_dict, self.whisper,
+                                           batch_size=self.cfg["whisper_batch_size"], language=language)
+            asr_results.update(asr_result)
+
+        ordered_asr_results = OrderedDict(sorted(asr_results.items(),
+                                                 key=lambda x: (int(x[0].split("_")[0]), int(x[0].split("_")[1]))))
+        ordered_chunk_idx_asr_results = OrderedDict()
+        for idx_info, script in ordered_asr_results.items():
+            audio_chunk_idx, seg_idx = idx_info.split("_", 1)
+            if audio_chunk_idx not in ordered_chunk_idx_asr_results:
+                ordered_chunk_idx_asr_results[audio_chunk_idx] = script
+            else:
+                ordered_chunk_idx_asr_results[audio_chunk_idx] += " " + script
+
+        for chunk_idx, script in ordered_chunk_idx_asr_results.items():
+            timestamp_dict = audio_chunk_time_dict[chunk_idx]
+            final_asr_result = f"{timestamp_dict['start_time']}~{timestamp_dict['end_time']}\t{script}"
+            final_asr_results.append(final_asr_result)
+
+        print("Transcription process finished")
+        elapsed_time = time.time() - start
+        audio_length = len(audio["waveform"]) / audio["sample_rate"]
+        print(f"Total elapsed time: {elapsed_time:.3f} sec")
+        print(f"xRT: {elapsed_time / audio_length:.3f} xRT")
+
+        return final_asr_results

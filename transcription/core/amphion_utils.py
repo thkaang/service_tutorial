@@ -16,6 +16,7 @@ from langdetect import detect
 
 sys.path.append("core")
 from whisper_api import Whisper
+from custom_utils import batched_ordered_dict
 
 
 def standardization(audio_buffer: io.BytesIO, audio_format='wav'):
@@ -154,6 +155,29 @@ def cut_by_speaker_label(vad_list):
     )
 
     return filter_list
+
+
+def asr_whisper_batch(ordered_mel_segments_dict, whisper: Whisper, batch_size=1, language='ko'):
+    if len(ordered_mel_segments_dict) == 0:
+        return []
+    start = time.time()
+    all_transcribe_result = {}
+
+    for batch_od in batched_ordered_dict(ordered_mel_segments_dict, batch_size):
+        batch_mel = []
+        for key, (mel, audio_len) in batch_od.items():
+            batch_mel.append(mel)
+
+        batch_mel_tensor = torch.stack(batch_mel).to(whisper.model.device)
+        transcribe_results = whisper.decode(batch_mel_tensor, language=language)
+
+        for idx_key, result in zip(batch_od.keys(), transcribe_results):
+            all_transcribe_result[idx_key] = result.text
+
+    elapsed_time = time.time() - start
+    print(f"Transcription elapsed time ({language}): {elapsed_time:.3f}")
+
+    return all_transcribe_result
 
 
 def asr_whisper(vad_segments, audio, whisper: Whisper, restrict_lang_dict: dict=None):

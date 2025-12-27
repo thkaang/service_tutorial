@@ -1,13 +1,20 @@
 {
-    "transcription_pipe_type": "v2",
+    "transcription_pipe_type": "v3",
     "restrict_lang": {
         "1st_lang": "ko",
         "2nd_lang": "zh-cn",
         "3rd_lang": "zh-tw",
         "whisper_restrict": "zh"
     },
+    "restrict_lang_v3": {
+        "1st_lang": "ko",
+        "2nd_lang": "zh",
+        "3rd_lang": "zh",
+        "whisper_restrict": "zh"
+    },
     "whisper_model_type": "turbo",
     "whisper_model_path": "model_files/whisper",
+    "whisper_batch_size": 16,
     "vad": {
         "preprocess": {
             "MERGE_GAP": 2,

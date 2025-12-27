@@ -1,5 +1,7 @@
 from silero_vad_module import SileroVAD
 from datetime import timedelta
+from itertools import islice
+from collections import OrderedDict
 
 
 def vad_only(vad: SileroVAD, audio):
@@ -82,3 +84,12 @@ def timedelta_to_hms(td: timedelta) -> str:
     m = (total_seconds % 3600) // 60
     s = total_seconds % 60
     return f"{h:02d}:{m:02d}:{s:02d}"
+
+
+def batched_ordered_dict(od, batch_size):
+    it = iter(od.items())
+    while True:
+        batch = list(islice(it, batch_size))
+        if not batch:
+            break
+        yield OrderedDict(batch)
