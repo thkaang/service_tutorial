@@ -7,11 +7,14 @@ import TranscriptionResults from '@/components/TranscriptionResults';
 import ThemeToggle from '@/components/ThemeToggle';
 
 type AppState = 'upload' | 'preview' | 'processing' | 'results';
+type Lang = 'ko' | 'en' | 'zh';
 
 export default function Home() {
   const [state, setState] = useState<AppState>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [transcriptionText, setTranscriptionText] = useState('');
+  const [language1, setLanguage1] = useState<Lang>('ko');
+  const [language2, setLanguage2] = useState<Lang>('en');
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -35,6 +38,8 @@ export default function Home() {
       // 파일 전송을 위해 FormData 사용
       const formData = new FormData();
       formData.append('file', selectedFile);
+      formData.append('language1', language1);
+      formData.append('language2', language2);
 
       // Flask 서버로 POST 요청 보내기
       const response = await fetch("/transcribe_request", {
@@ -93,6 +98,39 @@ export default function Home() {
 
         {state === 'preview' && selectedFile && (
           <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="language1" className="text-sm font-medium">
+                  Language 1
+                </label>
+                <select
+                  id="language1"
+                  value={language1}
+                  onChange={(e) => setLanguage1(e.target.value as Lang)}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="ko">한국어 (ko)</option>
+                  <option value="en">English (en)</option>
+                  <option value="zh">中文 (zh)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="language2" className="text-sm font-medium">
+                  Language 2
+                </label>
+                <select
+                  id="language2"
+                  value={language2}
+                  onChange={(e) => setLanguage2(e.target.value as Lang)}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="ko">한국어 (ko)</option>
+                  <option value="en">English (en)</option>
+                  <option value="zh">中文 (zh)</option>
+                </select>
+              </div>
+            </div>
             <FilePreview
               fileName={selectedFile.name}
               fileSize={selectedFile.size}

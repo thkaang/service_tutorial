@@ -38,6 +38,9 @@ def transcribe_request():
         return make_response("No file part in the request", 400)
 
     file = request.files["file"]
+    language1 = request.form["language1"]
+    language2 = request.form["language2"]
+    print(f"language1: {language1}, language2: {language2}")
 
     if file is None or file.filename == "":
         return make_response("No selected file", 400)
