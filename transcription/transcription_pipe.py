@@ -8,6 +8,7 @@ from tqdm import tqdm
 from collections import OrderedDict, defaultdict
 from pyannote.audio import Pipeline
 from datetime import timedelta
+from typing import Optional, Dict
 import core.separate_fast as separate_fast
 from core.uvr.separate import _audio_pre_
 from core.silero_vad_module import SileroVAD
@@ -77,13 +78,13 @@ class TranscriptionPipe:
 
         return audio_chunks
 
-    def run(self, audio_buffer: io.BytesIO, audio_format: str):
+    def run(self, audio_buffer: io.BytesIO, audio_format: str, restrict_lang_dict=None):
         if self.tr_pipe_type == 'v1':
             return self.__run_v1(audio_buffer, audio_format)
         elif self.tr_pipe_type == 'v2':
             return self.__run_v2_wo_spkdia(audio_buffer, audio_format)
         elif self.tr_pipe_type == 'v3':
-            return self.__run_v3_batch_wo_spkdia(audio_buffer, audio_format)
+            return self.__run_v3_batch_wo_spkdia(audio_buffer, audio_format, restrict_lang_dict)
         else:
             return f"not supported transcription_pipe_type: {self.tr_pipe_type}"
 
@@ -148,7 +149,7 @@ class TranscriptionPipe:
 
         return asr_results
 
-    def __run_v3_batch_wo_spkdia(self, audio_buffer: io.BytesIO, audio_format: str):
+    def __run_v3_batch_wo_spkdia(self, audio_buffer: io.BytesIO, audio_format: str, restrict_lang_dict: Optional[Dict]=None):
         start = time.time()
         asr_results = {}
         segment_dict = defaultdict(dict)
@@ -183,12 +184,13 @@ class TranscriptionPipe:
                 mel = self.whisper.log_mel_spectrogram(segment_audio)
                 language_code = self.whisper.detect_language(mel)
 
-                restrict_lang_dict = self.cfg["restrict_lang_v3"]
+                if restrict_lang_dict is None:
+                    restrict_lang_dict = self.cfg["restrict_lang_v3"]
 
                 if restrict_lang_dict:
                     if language_code not in restrict_lang_dict.values():
                         print(f"wrong lang: {language_code}")
-                        language_code = restrict_lang_dict["whisper_restrict"]
+                        language_code = restrict_lang_dict["2nd_lang"]
                         print(f"changed lang: {language_code}")
 
                 segment_dict[language_code][f"{idx}_{seg_idx}"] = [mel, segment["end"] - segment["start"]]

@@ -8,9 +8,7 @@
     },
     "restrict_lang_v3": {
         "1st_lang": "ko",
-        "2nd_lang": "zh",
-        "3rd_lang": "zh",
-        "whisper_restrict": "zh"
+        "2nd_lang": "zh"
     },
     "whisper_model_type": "turbo",
     "whisper_model_path": "model_files/whisper",

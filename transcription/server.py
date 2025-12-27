@@ -38,13 +38,18 @@ def ping():
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
     file = request.files.get("file")
+    language1 = request.form.get("language1", "ko")
+    language2 = request.form.get("language2", "en")
 
     allowed, audio_format = allowed_file(file.filename, ALLOWED_EXTENSIONS)
 
     if file and allowed:
         audio_buffer = io.BytesIO(file.read())
-
-        transcription_list = tr_pipe.run(audio_buffer, audio_format)
+        restrict_lang_dict = {
+            "1st_lang": language1,
+            "2nd_lang": language2
+        }
+        transcription_list = tr_pipe.run(audio_buffer, audio_format, restrict_lang_dict=restrict_lang_dict)
         transcription = '\n'.join(transcription_list)
 
         # text/plain으로 반환

@@ -40,7 +40,8 @@ def transcribe_request():
     file = request.files["file"]
     language1 = request.form["language1"]
     language2 = request.form["language2"]
-    print(f"language1: {language1}, language2: {language2}")
+    data = {'language1': language1, 'language2': language2}
+    print(data)
 
     if file is None or file.filename == "":
         return make_response("No selected file", 400)
@@ -49,7 +50,7 @@ def transcribe_request():
         "file": (file.filename, file.stream, file.content_type)
     }
 
-    response = requests.post(SECRET_ENDPOINT, files=files)
+    response = requests.post(SECRET_ENDPOINT, files=files, data=data)
     response = make_response(response.content, response.status_code)
     response.headers["Content-Type"] = response.headers.get(
         "Content-Type",
