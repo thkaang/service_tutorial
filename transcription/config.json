@@ -1,17 +1,30 @@
 {
-    "transcription_pipe_type": "v2",
-    "language": {
-        "multilingual": true,
-        "supported": [
-            "zh",
-            "en",
-            "fr",
-            "ja",
-            "ko",
-            "de"
-        ]
+    "transcription_pipe_type": "v3",
+    "restrict_lang": {
+        "1st_lang": "ko",
+        "2nd_lang": "zh-cn",
+        "3rd_lang": "zh-tw",
+        "whisper_restrict": "zh"
+    },
+    "restrict_lang_v3": {
+        "1st_lang": "ko",
+        "2nd_lang": "zh"
     },
     "whisper_model_type": "turbo",
+    "whisper_model_path": "model_files/whisper",
+    "whisper_batch_size": 16,
+    "vad": {
+        "preprocess": {
+            "MERGE_GAP": 2,
+            "MIN_SEGMENT_LENGTH": 60,
+            "MAX_SEGMENT_LENGTH": 120
+        },
+        "transcription": {
+            "MERGE_GAP": 2,
+            "MIN_SEGMENT_LENGTH": 1,
+            "MAX_SEGMENT_LENGTH": 30
+        }
+    },
     "separate": {
         "step1": {
             "model_path": "./model_files/UVR-MDX-NET-Inst_HQ_3.onnx",

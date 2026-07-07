@@ -2,9 +2,11 @@ torch==2.8.0
 torchaudio==2.8.0
 soundfile
 librosa==0.11.0
-pyannote.audio==4.0.0
+pyannote.audio==4.0.2
 numpy==2.2.6
-onnxruntime
+onnxruntime==1.23.0
 openai-whisper
 pydub
 resampy
+langdetect
+flask

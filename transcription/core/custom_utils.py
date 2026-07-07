@@ -1,4 +1,7 @@
 from silero_vad_module import SileroVAD
+from datetime import timedelta
+from itertools import islice
+from collections import OrderedDict
 
 
 def vad_only(vad: SileroVAD, audio):
@@ -18,7 +21,7 @@ def vad_only(vad: SileroVAD, audio):
     return out
 
 
-def merge_over_min_length(vad_list):
+def merge_over_min_length(vad_list, cfg, preprocess=False):
     """
     Merge and trim VAD segments by speaker labels, enforcing constraints on segment length and merge gaps.
 
@@ -28,9 +31,9 @@ def merge_over_min_length(vad_list):
     Returns:
         list: A list of updated VAD segments after merging and trimming.
     """
-    MERGE_GAP = 2  # merge gap in seconds, if smaller than this, merge
-    MIN_SEGMENT_LENGTH = 1  # min segment length in seconds
-    MAX_SEGMENT_LENGTH = 30  # max segment length in seconds
+    MERGE_GAP = cfg["MERGE_GAP"]  # merge gap in seconds, if smaller than this, merge
+    MIN_SEGMENT_LENGTH = cfg["MIN_SEGMENT_LENGTH"]  # min segment length in seconds
+    MAX_SEGMENT_LENGTH = cfg["MAX_SEGMENT_LENGTH"]  # max segment length in seconds
 
     updated_list = []
 
@@ -56,12 +59,37 @@ def merge_over_min_length(vad_list):
         f"merge_over_min_length > merged {len(vad_list) - len(updated_list)} segments"
     )
 
-    filter_list = [
-        vad for vad in updated_list if vad["end"] - vad["start"] >= MIN_SEGMENT_LENGTH
-    ]
+    if preprocess:
+        filter_list = updated_list
+    else:
+        filter_list = [
+            vad for vad in updated_list if vad["end"] - vad["start"] >= MIN_SEGMENT_LENGTH
+        ]
 
     print(
         f"merge_over_min_length > removed: {len(updated_list) - len(filter_list)} segments by length"
     )
 
     return filter_list
+
+
+def allowed_file(filename: str, allowed_extensions: list) -> tuple:
+    extension = filename.rsplit(".", 1)[1].lower()
+    return "." in filename and extension in allowed_extensions, extension
+
+
+def timedelta_to_hms(td: timedelta) -> str:
+    total_seconds = int(td.total_seconds())
+    h = total_seconds // 3600
+    m = (total_seconds % 3600) // 60
+    s = total_seconds % 60
+    return f"{h:02d}:{m:02d}:{s:02d}"
+
+
+def batched_ordered_dict(od, batch_size):
+    it = iter(od.items())
+    while True:
+        batch = list(islice(it, batch_size))
+        if not batch:
+            break
+        yield OrderedDict(batch)

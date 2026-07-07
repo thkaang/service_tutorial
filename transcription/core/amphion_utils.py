@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import io
 import sys
 import os
 import json
@@ -11,14 +12,15 @@ import librosa
 import numpy as np
 import pandas as pd
 from pydub import AudioSegment
+from langdetect import detect
 
 sys.path.append("core")
 from whisper_api import Whisper
+from custom_utils import batched_ordered_dict
 
 
-def standardization(audio_path: str):
-    name = os.path.basename(audio_path)
-    audio = AudioSegment.from_file(audio_path)
+def standardization(audio_buffer: io.BytesIO, audio_format='wav'):
+    audio = AudioSegment.from_file(audio_buffer, format=audio_format)
 
     # Convert the audio file to WAV format
     # audio = audio.set_frame_rate(cfg["entrypoint"]["SAMPLE_RATE"])
@@ -45,7 +47,6 @@ def standardization(audio_path: str):
 
     return {
         "waveform": waveform,
-        "name": name,
         "sample_rate": sample_rate,
     }
 
@@ -156,7 +157,30 @@ def cut_by_speaker_label(vad_list):
     return filter_list
 
 
-def asr_whisper(vad_segments, audio, whisper: Whisper):
+def asr_whisper_batch(ordered_mel_segments_dict, whisper: Whisper, batch_size=1, language='ko'):
+    if len(ordered_mel_segments_dict) == 0:
+        return []
+    start = time.time()
+    all_transcribe_result = {}
+
+    for batch_od in batched_ordered_dict(ordered_mel_segments_dict, batch_size):
+        batch_mel = []
+        for key, (mel, audio_len) in batch_od.items():
+            batch_mel.append(mel)
+
+        batch_mel_tensor = torch.stack(batch_mel).to(whisper.model.device)
+        transcribe_results = whisper.decode(batch_mel_tensor, language=language)
+
+        for idx_key, result in zip(batch_od.keys(), transcribe_results):
+            all_transcribe_result[idx_key] = result.text
+
+    elapsed_time = time.time() - start
+    print(f"Transcription elapsed time ({language}): {elapsed_time:.3f}")
+
+    return all_transcribe_result
+
+
+def asr_whisper(vad_segments, audio, whisper: Whisper, restrict_lang_dict: dict=None):
     """
     Perform Automatic Speech Recognition (ASR) on the VAD segments of the given audio.
 
@@ -194,6 +218,17 @@ def asr_whisper(vad_segments, audio, whisper: Whisper):
         end_frame = int(segment["end"] * 16000)
         segment_audio = temp_audio[start_frame:end_frame]
         transcribe_result = whisper.transcribe(segment_audio)
+
+        if restrict_lang_dict:
+            try:
+                lang_code = detect(transcribe_result)
+                if lang_code not in restrict_lang_dict.values():
+                    print(f"wrong lang transcription: {transcribe_result}")
+                    transcribe_result = whisper.transcribe(segment_audio, language=restrict_lang_dict["whisper_restrict"])
+                    print(f"restricted transcription: {transcribe_result}")
+            except Exception:
+                print(f"Exception occurs! transcription: {transcribe_result}")
+
         all_transcribe_result.append(transcribe_result)
     elapsed_time = time.time() - start
     print(f"Transcription elapsed time: {elapsed_time:.3f}")
